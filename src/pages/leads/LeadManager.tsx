@@ -1,405 +1,205 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Phone, Mail, Building, User, Calendar, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DataTable } from '@/components/ui/data-table';
-import { LeadForm } from '@/components/forms/LeadForm';
-import { DataService } from '@/lib/data-service';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { LeadService, initializeSampleData } from '@/lib/data-service';
 import { Lead } from '@/types/lead';
-import { Plus, Users, TrendingUp, Clock, Target, Mail, Phone, Building, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function LeadManager() {
-  const [leads, setLeads] = React.useState<Lead[]>([]);
-  const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null);
-  const [isFormOpen, setIsFormOpen] = React.useState(false);
-  const [loading, setLoading] = React.useState(true);
+const LeadManager = () => {
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    company: '',
+    position: '',
+    source: 'website' as Lead['source'],
+    status: 'new' as Lead['status'],
+    priority: 'medium' as Lead['priority'],
+    estimatedValue: '',
+    notes: '',
+    tags: '',
+    assignedTo: '',
+    nextFollowUpDate: ''
+  });
+
+  useEffect(() => {
+    loadLeads();
+  }, []);
 
   const loadLeads = async () => {
     try {
       setLoading(true);
-      let allLeads = await DataService.readAll<Lead>('leads');
-      
-      // Initialize with sample data if empty
-      if (allLeads.length === 0) {
-        const sampleLeads: Omit<Lead, 'id'>[] = [
-          {
-            firstName: 'Ahmed',
-            lastName: 'Rahman',
-            email: 'ahmed.rahman@example.com',
-            phone: '+880-1711-123456',
-            company: 'Rahman Industries',
-            position: 'CEO',
-            source: 'website',
-            status: 'qualified',
-            priority: 'high',
-            expectedValue: 5000000,
-            notes: 'Interested in college partnership for employee training programs',
-            tags: ['partnership', 'training', 'corporate'],
-            assignedTo: 'Project Manager',
-            createdAt: new Date('2024-10-01'),
-            updatedAt: new Date('2024-10-15'),
-            lastContactDate: new Date('2024-10-10'),
-            nextFollowUpDate: new Date('2024-11-01'),
-            address: {
-              street: '123 Business District',
-              city: 'Dhaka',
-              state: 'Dhaka Division',
-              zipCode: '1000',
-              country: 'Bangladesh'
-            },
-            socialMedia: {
-              linkedin: 'https://linkedin.com/in/ahmedrahman',
-              facebook: '',
-              twitter: ''
-            }
-          },
-          {
-            firstName: 'Fatima',
-            lastName: 'Khan',
-            email: 'fatima.khan@techcorp.bd',
-            phone: '+880-1712-234567',
-            company: 'TechCorp Bangladesh',
-            position: 'HR Director',
-            source: 'referral',
-            status: 'proposal-sent',
-            priority: 'medium',
-            expectedValue: 3000000,
-            notes: 'Looking for skilled graduates for software development positions',
-            tags: ['recruitment', 'graduates', 'software'],
-            assignedTo: 'Team Member',
-            createdAt: new Date('2024-09-15'),
-            updatedAt: new Date('2024-10-20'),
-            lastContactDate: new Date('2024-10-18'),
-            nextFollowUpDate: new Date('2024-10-25'),
-            address: {
-              street: '456 Tech Park',
-              city: 'Chittagong',
-              state: 'Chittagong Division',
-              zipCode: '4000',
-              country: 'Bangladesh'
-            },
-            socialMedia: {
-              linkedin: 'https://linkedin.com/in/fatimakhan',
-              facebook: '',
-              twitter: ''
-            }
-          },
-          {
-            firstName: 'Mohammad',
-            lastName: 'Ali',
-            email: 'mohammad.ali@gmail.com',
-            phone: '+880-1713-345678',
-            company: 'Local Business Association',
-            position: 'President',
-            source: 'event',
-            status: 'new',
-            priority: 'medium',
-            expectedValue: 2000000,
-            notes: 'Met at local business networking event. Interested in supporting education initiatives',
-            tags: ['networking', 'community', 'support'],
-            assignedTo: 'Administrator',
-            createdAt: new Date('2024-10-20'),
-            updatedAt: new Date('2024-10-20'),
-            lastContactDate: undefined,
-            nextFollowUpDate: new Date('2024-10-30'),
-            address: {
-              street: '789 Main Street',
-              city: 'Noakhali',
-              state: 'Chittagong Division',
-              zipCode: '3800',
-              country: 'Bangladesh'
-            },
-            socialMedia: {
-              linkedin: '',
-              facebook: 'https://facebook.com/mohammadali',
-              twitter: ''
-            }
-          },
-          {
-            firstName: 'Sarah',
-            lastName: 'Ahmed',
-            email: 'sarah.ahmed@education.gov.bd',
-            phone: '+880-1714-456789',
-            company: 'Ministry of Education',
-            position: 'Education Officer',
-            source: 'cold-call',
-            status: 'contacted',
-            priority: 'high',
-            expectedValue: 10000000,
-            notes: 'Government contact for potential funding and accreditation support',
-            tags: ['government', 'funding', 'accreditation'],
-            assignedTo: 'Administrator',
-            createdAt: new Date('2024-09-01'),
-            updatedAt: new Date('2024-10-05'),
-            lastContactDate: new Date('2024-10-03'),
-            nextFollowUpDate: new Date('2024-11-15'),
-            address: {
-              street: 'Bangladesh Secretariat',
-              city: 'Dhaka',
-              state: 'Dhaka Division',
-              zipCode: '1000',
-              country: 'Bangladesh'
-            },
-            socialMedia: {
-              linkedin: 'https://linkedin.com/in/sarahahmed',
-              facebook: '',
-              twitter: ''
-            }
-          },
-          {
-            firstName: 'Karim',
-            lastName: 'Hassan',
-            email: 'karim@constructionltd.bd',
-            phone: '+880-1715-567890',
-            company: 'Hassan Construction Ltd',
-            position: 'Managing Director',
-            source: 'advertisement',
-            status: 'negotiation',
-            priority: 'urgent',
-            expectedValue: 15000000,
-            notes: 'Potential construction partner for college building project',
-            tags: ['construction', 'partnership', 'building'],
-            assignedTo: 'Project Manager',
-            createdAt: new Date('2024-08-15'),
-            updatedAt: new Date('2024-10-22'),
-            lastContactDate: new Date('2024-10-20'),
-            nextFollowUpDate: new Date('2024-10-28'),
-            address: {
-              street: '321 Industrial Area',
-              city: 'Sylhet',
-              state: 'Sylhet Division',
-              zipCode: '3100',
-              country: 'Bangladesh'
-            },
-            socialMedia: {
-              linkedin: 'https://linkedin.com/in/karimhassan',
-              facebook: '',
-              twitter: ''
-            }
-          }
-        ];
-
-        for (const lead of sampleLeads) {
-          await DataService.create<Lead>('leads', lead);
-        }
-        
-        allLeads = await DataService.readAll<Lead>('leads');
-      }
-      
-      setLeads(allLeads);
+      await initializeSampleData();
+      const data = await LeadService.getAllLeads();
+      setLeads(data);
     } catch (error) {
-      console.error('Failed to load leads:', error);
+      console.error('Error loading leads:', error);
       toast.error('Failed to load leads');
     } finally {
       setLoading(false);
     }
   };
 
-  React.useEffect(() => {
-    loadLeads();
-  }, []);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.firstName || !formData.lastName || !formData.email) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
 
-  const handleCreateLead = async (leadData: Omit<Lead, 'id'>) => {
     try {
-      await DataService.create<Lead>('leads', leadData);
+      const leadData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        position: formData.position,
+        source: formData.source,
+        status: formData.status,
+        priority: formData.priority,
+        estimatedValue: formData.estimatedValue ? parseFloat(formData.estimatedValue) : undefined,
+        notes: formData.notes,
+        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
+        assignedTo: formData.assignedTo,
+        nextFollowUpDate: formData.nextFollowUpDate ? new Date(formData.nextFollowUpDate) : undefined,
+        conversionProbability: Math.floor(Math.random() * 100) + 1
+      };
+
+      if (editingLead) {
+        await LeadService.updateLead(editingLead.id, leadData);
+        toast.success('Lead updated successfully');
+      } else {
+        await LeadService.createLead(leadData);
+        toast.success('Lead created successfully');
+      }
+
       await loadLeads();
-      toast.success('Lead created successfully');
+      resetForm();
+      setIsDialogOpen(false);
     } catch (error) {
-      console.error('Failed to create lead:', error);
-      toast.error('Failed to create lead');
+      console.error('Error saving lead:', error);
+      toast.error('Failed to save lead');
     }
   };
 
-  const handleUpdateLead = async (leadData: Omit<Lead, 'id'>) => {
-    if (!selectedLead) return;
-    
-    try {
-      await DataService.update<Lead>('leads', selectedLead.id, leadData);
-      await loadLeads();
-      toast.success('Lead updated successfully');
-    } catch (error) {
-      console.error('Failed to update lead:', error);
-      toast.error('Failed to update lead');
-    }
+  const handleEdit = (lead: Lead) => {
+    setEditingLead(lead);
+    setFormData({
+      firstName: lead.firstName || '',
+      lastName: lead.lastName || '',
+      email: lead.email,
+      phone: lead.phone || '',
+      company: lead.company || '',
+      position: lead.position || '',
+      source: lead.source,
+      status: lead.status,
+      priority: lead.priority,
+      estimatedValue: lead.estimatedValue?.toString() || '',
+      notes: lead.notes || '',
+      tags: lead.tags?.join(', ') || '',
+      assignedTo: lead.assignedTo || '',
+      nextFollowUpDate: lead.nextFollowUpDate ? new Date(lead.nextFollowUpDate).toISOString().split('T')[0] : ''
+    });
+    setIsDialogOpen(true);
   };
 
-  const handleDeleteLead = async (lead: Lead) => {
-    if (!confirm('Are you sure you want to delete this lead?')) return;
-    
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this lead?')) {
+      return;
+    }
+
     try {
-      await DataService.delete('leads', lead.id);
-      await loadLeads();
+      await LeadService.deleteLead(id);
       toast.success('Lead deleted successfully');
+      await loadLeads();
     } catch (error) {
-      console.error('Failed to delete lead:', error);
+      console.error('Error deleting lead:', error);
       toast.error('Failed to delete lead');
     }
   };
 
-  const handleEditLead = (lead: Lead) => {
-    setSelectedLead(lead);
-    setIsFormOpen(true);
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      company: '',
+      position: '',
+      source: 'website',
+      status: 'new',
+      priority: 'medium',
+      estimatedValue: '',
+      notes: '',
+      tags: '',
+      assignedTo: '',
+      nextFollowUpDate: ''
+    });
+    setEditingLead(null);
   };
 
-  const handleAddLead = () => {
-    setSelectedLead(null);
-    setIsFormOpen(true);
-  };
-
-  const handleFormClose = () => {
-    setIsFormOpen(false);
-    setSelectedLead(null);
-  };
-
-  const handleFormSubmit = (leadData: Omit<Lead, 'id'>) => {
-    if (selectedLead) {
-      handleUpdateLead(leadData);
-    } else {
-      handleCreateLead(leadData);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: Lead['status']) => {
     switch (status) {
-      case 'new': return 'secondary';
-      case 'contacted': return 'default';
-      case 'qualified': return 'default';
-      case 'proposal-sent': return 'default';
-      case 'negotiation': return 'default';
-      case 'closed-won': return 'default';
-      case 'closed-lost': return 'destructive';
-      default: return 'secondary';
+      case 'new': return 'bg-blue-100 text-blue-800';
+      case 'contacted': return 'bg-yellow-100 text-yellow-800';
+      case 'qualified': return 'bg-green-100 text-green-800';
+      case 'proposal-sent': return 'bg-purple-100 text-purple-800';
+      case 'negotiation': return 'bg-orange-100 text-orange-800';
+      case 'closed-won': return 'bg-green-100 text-green-800';
+      case 'closed-lost': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: Lead['priority']) => {
     switch (priority) {
-      case 'urgent': return 'destructive';
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'default';
+      case 'urgent': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getSourceColor = (source: string) => {
-    switch (source) {
-      case 'website': return 'default';
-      case 'social-media': return 'secondary';
-      case 'referral': return 'default';
-      case 'cold-call': return 'outline';
-      case 'event': return 'secondary';
-      case 'advertisement': return 'outline';
-      default: return 'outline';
-    }
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-BD', {
+      style: 'currency',
+      currency: 'BDT',
+      minimumFractionDigits: 0
+    }).format(amount);
   };
 
-  const columns = [
-    {
-      key: 'firstName' as keyof Lead,
-      label: 'Lead',
-      render: (value: string, lead: Lead) => (
-        <div>
-          <div className="font-medium">{`${lead.firstName} ${lead.lastName}`}</div>
-          <div className="text-sm text-muted-foreground flex items-center">
-            <Mail className="h-3 w-3 mr-1" />
-            {lead.email}
-          </div>
-          <div className="text-sm text-muted-foreground flex items-center">
-            <Phone className="h-3 w-3 mr-1" />
-            {lead.phone}
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'company' as keyof Lead,
-      label: 'Company',
-      render: (value: string, lead: Lead) => (
-        <div>
-          <div className="flex items-center">
-            <Building className="h-4 w-4 mr-2" />
-            <div>
-              <div className="font-medium">{value || 'N/A'}</div>
-              <div className="text-sm text-muted-foreground">{lead.position || 'No position'}</div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'source' as keyof Lead,
-      label: 'Source',
-      render: (value: string) => (
-        <Badge variant={getSourceColor(value)}>
-          {value.replace('-', ' ').toUpperCase()}
-        </Badge>
-      )
-    },
-    {
-      key: 'status' as keyof Lead,
-      label: 'Status',
-      render: (value: string) => (
-        <Badge variant={getStatusColor(value)}>
-          {value.replace('-', ' ').toUpperCase()}
-        </Badge>
-      )
-    },
-    {
-      key: 'priority' as keyof Lead,
-      label: 'Priority',
-      render: (value: string) => (
-        <Badge variant={getPriorityColor(value)}>
-          {value.toUpperCase()}
-        </Badge>
-      )
-    },
-    {
-      key: 'expectedValue' as keyof Lead,
-      label: 'Expected Value',
-      render: (value: number) => (
-        <div className="font-medium">
-          {value ? `৳${value.toLocaleString()}` : 'N/A'}
-        </div>
-      )
-    },
-    {
-      key: 'assignedTo' as keyof Lead,
-      label: 'Assigned To',
-      render: (value: string) => (
-        <div className="flex items-center">
-          <Users className="h-4 w-4 mr-2" />
-          {value || 'Unassigned'}
-        </div>
-      )
-    },
-    {
-      key: 'nextFollowUpDate' as keyof Lead,
-      label: 'Next Follow-up',
-      render: (value: Date) => (
-        <div className="flex items-center">
-          <Clock className="h-4 w-4 mr-2" />
-          {value ? new Date(value).toLocaleDateString() : 'Not scheduled'}
-        </div>
-      )
-    }
-  ];
-
-  const leadStats = React.useMemo(() => {
-    const total = leads.length;
-    const newLeads = leads.filter(l => l.status === 'new').length;
-    const qualified = leads.filter(l => l.status === 'qualified').length;
-    const closedWon = leads.filter(l => l.status === 'closed-won').length;
-    const totalValue = leads.reduce((sum, lead) => sum + (lead.expectedValue || 0), 0);
+  const calculateStats = () => {
+    const totalLeads = leads.length;
+    const qualifiedLeads = leads.filter(lead => lead.status === 'qualified').length;
+    const totalValue = leads.reduce((sum, lead) => sum + (lead.estimatedValue || 0), 0);
+    const conversionRate = totalLeads > 0 ? Math.round((qualifiedLeads / totalLeads) * 100) : 0;
     
-    return { total, newLeads, qualified, closedWon, totalValue };
-  }, [leads]);
+    return { totalLeads, qualifiedLeads, totalValue, conversionRate };
+  };
+
+  const { totalLeads, qualifiedLeads, totalValue, conversionRate } = calculateStats();
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading leads...</div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -408,64 +208,253 @@ export default function LeadManager() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Lead Management</h1>
-          <p className="text-muted-foreground">Track and manage potential leads for the college project</p>
+          <h1 className="text-3xl font-bold tracking-tight">Lead Management</h1>
+          <p className="text-muted-foreground">
+            Track and manage potential investors and partners for the college project
+          </p>
         </div>
-        <Button onClick={handleAddLead}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Lead
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={resetForm}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Lead
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingLead ? 'Edit Lead' : 'Add New Lead'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingLead ? 'Update the lead information.' : 'Add a new potential investor or partner.'}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    placeholder="Enter first name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    placeholder="Enter last name"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="Enter email address"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company">Company</Label>
+                  <Input
+                    id="company"
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    placeholder="Enter company name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="position">Position</Label>
+                  <Input
+                    id="position"
+                    value={formData.position}
+                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                    placeholder="Enter position/title"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="source">Source</Label>
+                  <Select value={formData.source} onValueChange={(value: Lead['source']) => setFormData({ ...formData, source: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="website">Website</SelectItem>
+                      <SelectItem value="social-media">Social Media</SelectItem>
+                      <SelectItem value="referral">Referral</SelectItem>
+                      <SelectItem value="cold-call">Cold Call</SelectItem>
+                      <SelectItem value="event">Event</SelectItem>
+                      <SelectItem value="advertisement">Advertisement</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={formData.status} onValueChange={(value: Lead['status']) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="contacted">Contacted</SelectItem>
+                      <SelectItem value="qualified">Qualified</SelectItem>
+                      <SelectItem value="proposal-sent">Proposal Sent</SelectItem>
+                      <SelectItem value="negotiation">Negotiation</SelectItem>
+                      <SelectItem value="closed-won">Closed Won</SelectItem>
+                      <SelectItem value="closed-lost">Closed Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select value={formData.priority} onValueChange={(value: Lead['priority']) => setFormData({ ...formData, priority: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="estimatedValue">Estimated Value (BDT)</Label>
+                  <Input
+                    id="estimatedValue"
+                    type="number"
+                    value={formData.estimatedValue}
+                    onChange={(e) => setFormData({ ...formData, estimatedValue: e.target.value })}
+                    placeholder="Enter estimated value"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="assignedTo">Assigned To</Label>
+                  <Input
+                    id="assignedTo"
+                    value={formData.assignedTo}
+                    onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                    placeholder="Enter assignee email"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nextFollowUpDate">Next Follow-up Date</Label>
+                <Input
+                  id="nextFollowUpDate"
+                  type="date"
+                  value={formData.nextFollowUpDate}
+                  onChange={(e) => setFormData({ ...formData, nextFollowUpDate: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Input
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  placeholder="e.g., investor, technology, high-value"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Enter additional notes about this lead"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {editingLead ? 'Update' : 'Create'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Lead Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <User className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{leadStats.total}</div>
+            <div className="text-2xl font-bold">{totalLeads}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Leads</CardTitle>
-            <Target className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{leadStats.newLeads}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Qualified</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{leadStats.qualified}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Closed Won</CardTitle>
+            <CardTitle className="text-sm font-medium">Qualified Leads</CardTitle>
             <Target className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{leadStats.closedWon}</div>
+            <div className="text-2xl font-bold text-green-600">{qualifiedLeads}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Pipeline Value</CardTitle>
+            <Building className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">৳{leadStats.totalValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-purple-600">{formatCurrency(totalValue)}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            <Calendar className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{conversionRate}%</div>
           </CardContent>
         </Card>
       </div>
@@ -475,29 +464,89 @@ export default function LeadManager() {
         <CardHeader>
           <CardTitle>All Leads</CardTitle>
           <CardDescription>
-            Create, edit, and manage leads for the college project
+            Manage and track all potential investors and partners
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DataTable
-            data={leads}
-            columns={columns}
-            onAdd={handleAddLead}
-            onEdit={handleEditLead}
-            onDelete={handleDeleteLead}
-            addLabel="Create Lead"
-            searchable={true}
-          />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Assigned To</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {leads.map((lead) => (
+                <TableRow key={lead.id}>
+                  <TableCell className="font-medium">
+                    {lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim()}
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{lead.company}</div>
+                      <div className="text-sm text-muted-foreground">{lead.position}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center text-sm">
+                        <Mail className="h-3 w-3 mr-1" />
+                        {lead.email}
+                      </div>
+                      {lead.phone && (
+                        <div className="flex items-center text-sm">
+                          <Phone className="h-3 w-3 mr-1" />
+                          {lead.phone}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(lead.status)}>
+                      {lead.status.replace('-', ' ')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getPriorityColor(lead.priority)}>
+                      {lead.priority}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {lead.estimatedValue ? formatCurrency(lead.estimatedValue) : '-'}
+                  </TableCell>
+                  <TableCell>{lead.assignedTo || '-'}</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(lead)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(lead.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
-
-      {/* Lead Form Dialog */}
-      <LeadForm
-        lead={selectedLead}
-        isOpen={isFormOpen}
-        onClose={handleFormClose}
-        onSubmit={handleFormSubmit}
-      />
     </div>
   );
-}
+};
+
+export default LeadManager;
