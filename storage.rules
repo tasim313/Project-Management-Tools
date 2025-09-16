@@ -1,0 +1,121 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.role == 'admin';
+    }
+    
+    // Helper function to check if user is manager
+    function isManager() {
+      return isAuthenticated() && 
+             (request.auth.token.role == 'manager' || isAdmin());
+    }
+    
+    // Helper function to validate file size (max 10MB)
+    function isValidSize() {
+      return request.resource.size <= 10 * 1024 * 1024;
+    }
+    
+    // Helper function to validate image file types
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // Helper function to validate document file types
+    function isValidDocumentType() {
+      return request.resource.contentType in [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain',
+        'text/csv'
+      ];
+    }
+
+    // User profile images - users can upload their own profile pictures
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      request.auth.uid == userId &&
+                      isValidImageType() &&
+                      isValidSize();
+    }
+
+    // Project documents - authenticated users can upload, managers can manage
+    match /documents/{projectId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (isValidDocumentType() || isValidImageType()) &&
+                      isValidSize();
+      allow delete: if isManager();
+    }
+
+    // Task attachments - authenticated users can upload task-related files
+    match /tasks/{taskId}/attachments/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (isValidDocumentType() || isValidImageType()) &&
+                      isValidSize();
+      allow delete: if isManager();
+    }
+
+    // Lead attachments - authenticated users can upload lead-related files
+    match /leads/{leadId}/attachments/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (isValidDocumentType() || isValidImageType()) &&
+                      isValidSize();
+      allow delete: if isManager();
+    }
+
+    // Meeting recordings and materials
+    match /meetings/{meetingId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      isValidSize();
+      allow delete: if isManager();
+    }
+
+    // Finance receipts and invoices
+    match /finances/{financeId}/receipts/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isManager() && 
+                      (isValidDocumentType() || isValidImageType()) &&
+                      isValidSize();
+      allow delete: if isManager();
+    }
+
+    // Public assets - read-only for all, write for admins
+    match /public/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidSize();
+    }
+
+    // Backup files - admin only
+    match /backups/{fileName} {
+      allow read, write: if isAdmin();
+    }
+
+    // Temporary uploads - authenticated users can upload temporarily
+    match /temp/{userId}/{fileName} {
+      allow read, write: if isAuthenticated() && 
+                            request.auth.uid == userId &&
+                            isValidSize();
+    }
+
+    // Default deny rule
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

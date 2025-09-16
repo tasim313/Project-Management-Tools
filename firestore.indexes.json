@@ -1,0 +1,173 @@
+{
+    "indexes": [
+      {
+        "collectionGroup": "tasks",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "status",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "createdAt",
+            "order": "DESCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "tasks",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "assignee",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "dueDate",
+            "order": "ASCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "tasks",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "priority",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "createdAt",
+            "order": "DESCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "leads",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "status",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "createdAt",
+            "order": "DESCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "leads",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "assignedTo",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "nextFollowUpDate",
+            "order": "ASCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "leads",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "estimatedValue",
+            "order": "DESCENDING"
+          },
+          {
+            "fieldPath": "createdAt",
+            "order": "DESCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "finances",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "type",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "date",
+            "order": "DESCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "finances",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "category",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "date",
+            "order": "DESCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "meetings",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "status",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "date",
+            "order": "ASCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "meetings",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "attendees",
+            "arrayConfig": "CONTAINS"
+          },
+          {
+            "fieldPath": "date",
+            "order": "ASCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "documents",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "uploadedBy",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "createdAt",
+            "order": "DESCENDING"
+          }
+        ]
+      },
+      {
+        "collectionGroup": "documents",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "category",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "createdAt",
+            "order": "DESCENDING"
+          }
+        ]
+      }
+    ],
+    "fieldOverrides": []
+  }
